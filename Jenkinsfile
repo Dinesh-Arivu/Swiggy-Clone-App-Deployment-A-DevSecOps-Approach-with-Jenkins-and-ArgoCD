@@ -15,14 +15,14 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'main', url: 'https://github.com/dushyantkumark/Swiggy_DevSecOps_Project.git'
+                git branch: 'main', url: 'https://github.com/Dinesh-Arivu/Swiggy-Clone-App-Deployment-A-DevSecOps-Approach-with-Jenkins-and-ArgoCD.git'
             }
         }
         stage("Sonarqube Analysis "){
             steps{
                 withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Swiggy-CICD \
-                    -Dsonar.projectKey=Swiggy-CICD '''
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Swiggy \
+                    -Dsonar.projectKey=Swiggy '''
                 }
             }
         }
@@ -52,18 +52,18 @@ pipeline{
         stage("Docker Build & Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker'){ 
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){ 
                     app.push("${env.BUILD_NUMBER}")  
                        sh "docker build -t swiggy-app ."
-                       sh "docker tag swiggy-app dushyantkumark/swiggy-app:latest "
-                       sh "docker push dushyantkumark/swiggy-app:latest "
+                       sh "docker tag swiggy-app dinesh1097/swiggy-app:latest "
+                       sh "docker push dinesh1097/swiggy-app:latest "
                     }
                 }
             }
         }
         stage("TRIVY IMAGE SCAN"){
             steps{
-                sh "trivy image dushyantkumark/swiggy-app:latest > trivyimage.txt" 
+                sh "trivy image dinesh1097/swiggy-app:latest > trivyimage.txt" 
             }
         }
         stage("Depoy to container"){
