@@ -6,6 +6,8 @@ pipeline{
     }
     environment {
         SCANNER_HOME=tool 'sonar-scanner'
+        GIT_REPO_NAME = "Swiggy-Clone-App-Deployment-A-DevSecOps-Approach-with-Jenkins-and-ArgoCD.git"
+        GIT_USER_NAME = "Dinesh-Arivu"     
     }
     stages {
         stage('clean workspace'){
@@ -21,17 +23,17 @@ pipeline{
         stage("Sonarqube Analysis "){
             steps{
                 withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Swiggy \
-                    -Dsonar.projectKey=Swiggy '''
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=swiggy \
+                    -Dsonar.projectKey=swiggy '''
                 }
             }
         }
         stage("quality gate"){
            steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token'
                 }
-            } 
+            }
         }
         stage('Install Dependencies') {
             steps {
@@ -52,33 +54,35 @@ pipeline{
         stage("Docker Build & Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){ 
-                    app.push("${env.BUILD_NUMBER}")  
-                       sh "docker build -t swiggy-app ."
-                       sh "docker tag swiggy-app dinesh1097/swiggy-app:latest "
-                       sh "docker push dinesh1097/swiggy-app:latest "
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
+                       sh "docker build -t swiggy ."
+                       sh "docker tag swiggy dinesh1097/swiggy:latest "
+                       sh "docker push dinesh1097/swiggy:latest "
                     }
                 }
             }
         }
-        stage("TRIVY IMAGE SCAN"){
+        stage("TRIVY Image Scan"){
             steps{
-                sh "trivy image dinesh1097/swiggy-app:latest > trivyimage.txt" 
+                sh "trivy image dinesh1097/swiggy:latest > trivyimage.txt"
             }
         }
-        stage("Depoy to container"){
-            steps{
-                sh "docker run -d -p 3000:80 --name swiggy dushyantkumark/swiggy:latest" 
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Dinesh-Arivu/Swiggy-Clone-App-Deployment-A-DevSecOps-Approach-with-Jenkins-and-ArgoCD.git'
             }
         }
-        stage('Deploy to k8s'){
-            steps{
-                dir('k8s-manifest') {
-                  withKubeCredentials(kubectlCredentials: [[caCertificate: '', clusterName: 'swiggy-cluster', contextName: '', credentialsId: 'k8s', namespace: 'swiggy', serverUrl: '']]) {
-                    sh 'kubectl apply -f deployment.yaml'    
-                    sh 'kubectl apply -f service.yaml'
-                   }
-                }   
+        stage('Update Deployment File') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                       NEW_IMAGE_NAME = "dinesh1097/swiggy:latest"   
+                       sh "sed -i 's|image: .*|image: $NEW_IMAGE_NAME|' K8S-manifest/deployment.yml"
+                       sh 'git add K8S-manifest/deployment.yml'
+                       sh "git commit -m 'Update deployment image to $NEW_IMAGE_NAME'"
+                       sh "git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main"
+                    }
+                }
             }
         }
     }
