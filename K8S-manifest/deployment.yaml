@@ -2,20 +2,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tetris
+  name: swiggy-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: tetris
+      app: swiggy-app
   template:
     metadata:
       labels:
-        app: tetris
+        app: swiggy-app
     spec:
       containers:
-      - name: tetris
-        image: dinesh1097/tetrisv2:latest
+      - name: swiggy-app
+        image: dinesh1097/swiggy-app:latest
         ports:
         - containerPort: 3000   # Use port 3000
 
@@ -23,10 +23,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tetris-service
+  name: swiggy-service
 spec:
   selector:
-    app: tetris
+    app: swiggy-app
   ports:
   - protocol: TCP
     port: 80                 # Expose port 80
