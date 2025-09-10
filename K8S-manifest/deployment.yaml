@@ -7,15 +7,15 @@ spec:
   replicas: 3
   selector:
     matchLabels:
-      app: swiggy-app
+      app: swiggy
   template:
     metadata:
       labels:
-        app: swiggy-app
+        app: swiggy
     spec:
       containers:
-      - name: swiggy-app
-        image: dinesh1097/swiggy-app:latest
+      - name: swiggy
+        image: dinesh1097/swiggy:latest
         ports:
         - containerPort: 3000   # Use port 3000
 
@@ -26,7 +26,7 @@ metadata:
   name: swiggy-service
 spec:
   selector:
-    app: swiggy-app
+    app: swiggy
   ports:
   - protocol: TCP
     port: 80                 # Expose port 80
